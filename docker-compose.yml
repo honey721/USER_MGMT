@@ -5,7 +5,7 @@ services:
     container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: booksdb
+      MYSQL_DATABASE: usermgmt
     ports:
       - "3307:3306"
     volumes:
@@ -30,7 +30,7 @@ services:
     build: .
     container_name: booksapp
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/booksdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/usermgmt?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpassword
       SPRING_RABBITMQ_HOST: rabbitmq

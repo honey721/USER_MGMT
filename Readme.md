@@ -1,48 +1,61 @@
 # 📚 User Management System – Spring Boot + Docker + MySQL + RabbitMQ
 
-A production-ready **User Management System** built with:
+A production-ready **User Management System** built using modern enterprise-level technologies. This project demonstrates authentication, authorization, event publishing, and full Dockerized deployment.
+
+---
+
+# 🚀 Tech Stack
 
 * **Spring Boot 3.x**
 * **Spring Security + JWT Authentication**
 * **Role-Based Authorization**
 * **MySQL (Dockerized)**
-* **RabbitMQ Event Publishing**
-* **JPA + Hibernate**
-* **Dockerfile + docker-compose.yml for complete environment setup**
+* **RabbitMQ (Event Messaging)**
+* **Spring Data JPA + Hibernate**
+* **Docker + Docker Compose**
+* **Maven**
 
 ---
 
-## 🚀 Features
+# ✨ Features
 
-### ✅ Authentication & Authorization
+## 🔐 Authentication & Authorization
 
-* JWT-based login
+* JWT-based authentication
+* Stateless API
 * Secure password hashing using BCrypt
-* **Role-based restrictions** using `@PreAuthorize`
-* Supports multiple roles: `ADMIN`, `USER`
+* Role-based authorization using:
 
-### ✅ User Operations
+  ```java
+  @PreAuthorize("hasAuthority('ADMIN')")
+  ```
+* In-built roles: `ADMIN`, `USER`
 
-* User Registration
-* User Login
-* Assign roles to user (ADMIN only)
-* View current user profile
+## 👤 User Features
 
-### ✅ Role Management
+* Register new users
+* User login (returns JWT)
+* View authenticated user profile
+* Assign roles (ADMIN only)
 
-* Create new roles (ADMIN only)
-* Auto insert default `USER` and `ADMIN` roles at startup using `CommandLineRunner`
+## 🛡 Role Management
 
-### ✅ Event System (RabbitMQ)
+* Create new roles
+* Assign multiple roles to a user
+* Default `ADMIN` and `USER` roles auto-created using `CommandLineRunner`
 
-Triggers events:
+## 📡 RabbitMQ Event System
+
+Events published automatically:
 
 * `user.registered`
 * `user.loggedin`
 
+Helps simulate real microservice communication.
+
 ---
 
-# 📦 Project Architecture
+# 📂 Project Structure
 
 ```
 src/
@@ -69,78 +82,43 @@ src/
  │     ├── EventPublisherService.java
  │     ├── JWTUtil.java
  │
- ├── BooksStoreApplication.java
+ ├── UserManagementApplication.java
 ```
 
 ---
 
 # 🗄 Database Schema (ER Diagram)
 
-### **1. Users Table**
+## **Users Table**
 
-| Column   | Type    | Details     |
-| -------- | ------- | ----------- |
-| id       | BIGINT  | Primary Key |
-| username | VARCHAR | Unique      |
-| email    | VARCHAR | Unique      |
-| password | VARCHAR | Encoded     |
+| Column   | Type    | Notes           |
+| -------- | ------- | --------------- |
+| id       | BIGINT  | Primary Key     |
+| username | VARCHAR | Unique          |
+| email    | VARCHAR | Unique          |
+| password | VARCHAR | Hashed (BCrypt) |
 
-### **2. Roles Table**
+## **Roles Table**
 
-| Column | Type                 |
-| ------ | -------------------- |
-| id     | BIGINT               |
-| name   | VARCHAR (ADMIN/USER) |
+| Column | Type    | Notes       |
+| ------ | ------- | ----------- |
+| id     | BIGINT  | Primary Key |
+| name   | VARCHAR | ADMIN/USER  |
 
-### **3. User_Roles Join Table**
+## **user_roles (Join Table)**
 
 | user_id | role_id |
 | ------- | ------- |
 
 ---
 
-# 🔧 Design Decisions & Assumptions
+# 🐳 Docker Setup (App + MySQL + RabbitMQ)
 
-### **1. JWT-Based Authentication**
+Run the complete system using **Docker Compose**.
 
-Chosen to make system stateless and scalable. Each request must send:
+## **docker-compose.yml**
 
-```
-Authorization: Bearer <token>
-```
-
-### **2. Role-Based Authorization**
-
-Used `@PreAuthorize("hasAuthority('ADMIN')")` for fine-grained access control.
-
-### **3. RabbitMQ for Event Publishing**
-
-To simulate real-world microservices communication. Two events published:
-
-* `user.registered`
-* `user.loggedin`
-
-### **4. DataInitializer for Auto Role Creation**
-
-Automatically inserts:
-
-* USER
-* ADMIN
-  if not present in DB.
-
-### **5. Dockerized Environment**
-
-Ensures entire app (DB + RabbitMQ + Spring Boot) runs with **one command**.
-
----
-
-# 🐳 Docker Setup (MySQL + RabbitMQ + App)
-
-To run the entire system with Docker:
-
-## **1. docker-compose.yml**
-
-```yml
+```yaml
 version: "3.8"
 services:
   mysql:
@@ -148,13 +126,13 @@ services:
     container_name: mysql
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: usersdb
+      MYSQL_DATABASE: usermgmt
     ports:
       - "3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD","mysqladmin","ping","-prootpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-prootpassword"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -170,7 +148,7 @@ services:
     build: .
     container_name: userapp
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/usersdb
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/usermgmt?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: rootpassword
       SPRING_RABBITMQ_HOST: rabbitmq
@@ -188,7 +166,7 @@ volumes:
 
 ---
 
-## **2. Dockerfile**
+# 🛠 Dockerfile
 
 ```dockerfile
 # Build Stage
@@ -211,17 +189,17 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 
 # ▶️ Running the Project
 
-### **Step 1 — Build & Start**
+### 🟩 Step 1: Build & Start
 
-```
+```bash
 docker-compose up --build
 ```
 
-### **Step 2 — Check Running Services**
+### 🟩 Step 2: Access Services
 
-* App → [http://localhost:8081](http://localhost:8081)
-* MySQL → localhost:3307
-* RabbitMQ UI → [http://localhost:15672](http://localhost:15672)
+* **App:** [http://localhost:8081](http://localhost:8081)
+* **MySQL:** localhost:3307
+* **RabbitMQ UI:** [http://localhost:15672](http://localhost:15672)
 
   * username: guest
   * password: guest
@@ -230,7 +208,7 @@ docker-compose up --build
 
 # 🧪 Testing APIs
 
-## **1. User Registration**
+## 🔸 1. Register User
 
 ```
 POST /api/users/register
@@ -247,7 +225,7 @@ Body:
 }
 ```
 
-## **2. Login**
+## 🔸 2. Login
 
 ```
 POST /api/users/login
@@ -257,15 +235,14 @@ Response:
 
 ```json
 {
-  "token": "…"
+  "token": "<jwt-token>"
 }
 ```
 
-## **3. Create Role (ADMIN only)**
+## 🔸 3. Create Role (ADMIN Only)
 
 ```
 POST /api/roles
-Headers:
 Authorization: Bearer <ADMIN_TOKEN>
 ```
 
@@ -277,11 +254,10 @@ Body:
 }
 ```
 
-## **4. Assign Role to User**
+## 🔸 4. Assign Role to User
 
 ```
-POST /api/users/5/roles
-Headers:
+POST /api/users/{id}/roles
 Authorization: Bearer <ADMIN_TOKEN>
 ```
 
@@ -293,16 +269,11 @@ Body:
 
 ---
 
-# 📩 Event Publishing (RabbitMQ)
+# 📩 RabbitMQ Events
 
-Every time a user registers:
+### Event: `user.registered`
 
-```
-exchange: user.events.exchange
-routing key: user.registered
-```
-
-Payload sample:
+Payload:
 
 ```json
 {
@@ -313,16 +284,29 @@ Payload sample:
 }
 ```
 
+### Event: `user.loggedin`
+
+Payload:
+
+```json
+{
+  "email": "john@example.com",
+  "time": "2025-01-01T10:25:00"
+}
+```
+
 ---
 
 # 📘 Conclusion
 
-This project demonstrates:
+This project showcases:
 
-✔ Complete JWT Authentication
+✔ JWT Authentication
 ✔ Role-Based Authorization
-✔ RabbitMQ Event System
-✔ Containerized Infrastructure
-✔ Clean Architecture
+✔ RabbitMQ Event Publishing
+✔ Full Docker Deployment
+✔ Clean Modular Architecture
 ✔ Real MySQL Database
-✔ Fully runnable via Docker
+✔ Developer-friendly setup
+
+--
